@@ -243,7 +243,7 @@ int main(int argc, char *argv[])
     }
     printf("file has %d blocks\n", blocks);
 
-    uf2_file = fopen(argv[1], "r");
+    uf2_file = fopen(argv[1], "rb");
     if(NULL == uf2_file)
     {
         fprintf(stderr, "can not read the file  %s\n", argv[1]);
