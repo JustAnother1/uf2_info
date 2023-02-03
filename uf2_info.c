@@ -18,6 +18,7 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <sys/stat.h>
+#include <string.h>
 
 static bool analyze_block(unsigned int num);
 static void check_familyID(uint32_t id);
@@ -223,6 +224,22 @@ static bool analyze_block(unsigned int num)
     return true;
 }
 
+void dump_block(unsigned int num)
+{
+    unsigned int i;
+    uint32_t block_mem_start = cur_mem_area_end -UF2_Block.payloadSize;
+    printf("block %d data (0x%08x - 0x%08x):", num, block_mem_start, cur_mem_area_end);
+    for(i = 0; i < UF2_Block.payloadSize; i++)
+    {
+        if(0 == i%16)
+        {
+            printf("\n0x%08x :", block_mem_start + i);
+        }
+        printf(" %02x", UF2_Block.data[i]);
+    }
+    printf("\n\n");
+}
+
 int main(int argc, char *argv[])
 {
     struct stat file_info;
@@ -230,6 +247,8 @@ int main(int argc, char *argv[])
     unsigned int blocks;
     FILE* uf2_file;
     unsigned int i;
+    char * fileName;
+    bool do_dump = false;
 
     if(512 != sizeof(UF2_Block))
     {
@@ -239,13 +258,23 @@ int main(int argc, char *argv[])
 
     if(2 > argc)
     {
-        fprintf(stderr, "usage: %s file.uf2\n", argv[0]);
+        fprintf(stderr, "usage: %s [-d] file.uf2\n", argv[0]);
         return 1;
     }
 
-    if(stat(argv[1], &file_info) != 0)
+    if(0 == strcmp("-d", argv[1]))
     {
-        fprintf(stderr, "can not get file information for %s\n", argv[1]);
+        do_dump = true;
+        fileName = argv[2];
+    }
+    else
+    {
+        fileName = argv[1];
+    }
+
+    if(stat(fileName, &file_info) != 0)
+    {
+        fprintf(stderr, "can not get file information for %s\n", fileName);
         return 2;
     }
     file_size = file_info.st_size;
@@ -258,10 +287,10 @@ int main(int argc, char *argv[])
     }
     printf("file has %d blocks\n", blocks);
 
-    uf2_file = fopen(argv[1], "rb");
+    uf2_file = fopen(fileName, "rb");
     if(NULL == uf2_file)
     {
-        fprintf(stderr, "can not read the file  %s\n", argv[1]);
+        fprintf(stderr, "can not read the file  %s\n", fileName);
         return 4;
     }
 
@@ -284,6 +313,10 @@ int main(int argc, char *argv[])
         {
             fprintf(stderr, "block %d has invalid data\n", i);
             return 7;
+        }
+        if(true == do_dump)
+        {
+            dump_block(i);
         }
     }
 
