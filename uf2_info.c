@@ -16,6 +16,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <unistd.h>
 #include <sys/stat.h>
 #include <string.h>
@@ -240,6 +241,16 @@ void dump_block(unsigned int num)
     printf("\n\n");
 }
 
+void create_bin_from_block(unsigned int num)
+{
+    FILE* binf;
+    char filename[30] = {0};
+    sprintf(filename, "%d.bin", num);
+    binf = fopen(filename, "w");
+    fwrite(UF2_Block.data, UF2_Block.payloadSize, 1, binf);
+    fclose(binf);
+}
+
 int main(int argc, char *argv[])
 {
     struct stat file_info;
@@ -249,6 +260,7 @@ int main(int argc, char *argv[])
     unsigned int i;
     char * fileName;
     bool do_dump = false;
+    bool make_bins = false;
 
     if(512 != sizeof(UF2_Block))
     {
@@ -258,13 +270,18 @@ int main(int argc, char *argv[])
 
     if(2 > argc)
     {
-        fprintf(stderr, "usage: %s [-d] file.uf2\n", argv[0]);
+        fprintf(stderr, "usage: %s [-d] [-b] file.uf2\n", argv[0]);
         return 1;
     }
 
     if(0 == strcmp("-d", argv[1]))
     {
         do_dump = true;
+        fileName = argv[2];
+    }
+    else if(0 == strcmp("-b", argv[1]))
+    {
+        make_bins = true;
         fileName = argv[2];
     }
     else
@@ -317,6 +334,10 @@ int main(int argc, char *argv[])
         if(true == do_dump)
         {
             dump_block(i);
+        }
+        if(true == make_bins)
+        {
+            create_bin_from_block(i);
         }
     }
 
